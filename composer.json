@@ -1,0 +1,22 @@
+{
+  "name": "zadora/lms",
+  "description": "Premium workforce learning, certification, and compliance platform for WordPress.",
+  "type": "wordpress-plugin",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Zadora\\Lms\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Zadora\\Lms\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "lint": "php -l zadora-lms.php"
+  }
+}

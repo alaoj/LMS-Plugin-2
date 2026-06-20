@@ -1,0 +1,20 @@
+{
+  "name": "zadora-lms",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "wp-scripts build assets/src/app/main.jsx --output-path=assets/dist",
+    "start": "wp-scripts start assets/src/app/main.jsx --output-path=assets/dist",
+    "lint:js": "wp-scripts lint-js assets/src"
+  },
+  "dependencies": {
+    "@wordpress/scripts": "^30.0.0",
+    "chart.js": "^4.4.7",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
