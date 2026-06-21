@@ -55,6 +55,54 @@ final class ReportingRepository
         ];
     }
 
+    public function learner(int $userId): array
+    {
+        global $wpdb;
+
+        $enrollments = $wpdb->get_results($wpdb->prepare(
+            "SELECT e.*, c.title AS course_title
+             FROM {$this->tables->enrollments()} e
+             LEFT JOIN {$this->tables->courses()} c ON c.id = e.course_id
+             WHERE e.user_id = %d
+             ORDER BY e.updated_at DESC
+             LIMIT 20",
+            $userId
+        ), ARRAY_A) ?: [];
+
+        $items = array_map(function (array $enrollment) use ($wpdb): array {
+            $totalLessons = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->tables->lessons()} WHERE course_id = %d",
+                (int) $enrollment['course_id']
+            ));
+
+            $completedLessons = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->tables->progress()} WHERE enrollment_id = %d AND status = 'completed'",
+                (int) $enrollment['id']
+            ));
+
+            return [
+                'enrollment_id' => (int) $enrollment['id'],
+                'course_id' => (int) $enrollment['course_id'],
+                'course_title' => $enrollment['course_title'] ?: 'Untitled course',
+                'status' => $enrollment['status'],
+                'started_at' => $enrollment['started_at'],
+                'completed_at' => $enrollment['completed_at'],
+                'completed_lessons' => $completedLessons,
+                'total_lessons' => $totalLessons,
+                'progress_percent' => $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100, 2) : 0,
+            ];
+        }, $enrollments);
+
+        $completed = array_filter($items, static fn (array $item): bool => $item['status'] === 'completed');
+
+        return [
+            'user_id' => $userId,
+            'active_courses' => count(array_filter($items, static fn (array $item): bool => $item['status'] === 'active')),
+            'completed_courses' => count($completed),
+            'courses' => $items,
+        ];
+    }
+
     private function count(string $table): int
     {
         global $wpdb;

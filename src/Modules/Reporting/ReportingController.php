@@ -30,6 +30,12 @@ final class ReportingController implements ControllerInterface
             'callback' => [$this, 'corporate'],
             'permission_callback' => Permissions::capability(Capabilities::VIEW_REPORTS),
         ]);
+
+        register_rest_route(RestRegistrar::NAMESPACE, '/reports/learner', [
+            'methods' => 'GET',
+            'callback' => [$this, 'learner'],
+            'permission_callback' => Permissions::authenticated(),
+        ]);
     }
 
     public function overview(WP_REST_Request $request): WP_REST_Response
@@ -40,5 +46,10 @@ final class ReportingController implements ControllerInterface
     public function corporate(WP_REST_Request $request): WP_REST_Response
     {
         return rest_ensure_response($this->reports->corporate((int) $request['company_id']));
+    }
+
+    public function learner(WP_REST_Request $request): WP_REST_Response
+    {
+        return rest_ensure_response($this->reports->learner(get_current_user_id()));
     }
 }

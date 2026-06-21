@@ -13,6 +13,9 @@ export function App({ initialView = 'dashboard' }) {
   const [companies, setCompanies] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [overview, setOverview] = useState(null);
+  const [learnerReport, setLearnerReport] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -24,8 +27,9 @@ export function App({ initialView = 'dashboard' }) {
       api('/certificates').catch(() => []),
       api('/companies').catch(() => []),
       api('/notifications').catch(() => []),
-      api('/reports/overview').catch(() => null)
-    ]).then(([courseData, certificateData, companyData, notificationData, overviewData]) => {
+      api('/reports/overview').catch(() => null),
+      api('/reports/learner').catch(() => null)
+    ]).then(([courseData, certificateData, companyData, notificationData, overviewData, learnerData]) => {
       if (!active) {
         return;
       }
@@ -35,6 +39,7 @@ export function App({ initialView = 'dashboard' }) {
       setCompanies(companyData);
       setNotifications(notificationData);
       setOverview(overviewData);
+      setLearnerReport(learnerData);
       setLoading(false);
     });
 
@@ -72,12 +77,27 @@ export function App({ initialView = 'dashboard' }) {
               <Dashboard
                 certificates={certificates}
                 courses={courses}
+                learnerReport={learnerReport}
                 loading={loading}
                 notifications={notifications}
                 overview={overview}
               />
             )}
-            {view === 'courses' && <Courses courses={courses} loading={loading} />}
+            {view === 'courses' && (
+              <Courses
+                courses={courses}
+                lessons={lessons}
+                loading={loading}
+                onJoinWaitlist={async (course) => {
+                  await api(`/courses/${course.id}/waitlist`, { method: 'POST' });
+                }}
+                onSelectCourse={async (course) => {
+                  setSelectedCourse(course);
+                  setLessons(await api(`/courses/${course.id}/lessons`).catch(() => []));
+                }}
+                selectedCourse={selectedCourse}
+              />
+            )}
             {view === 'companies' && <Companies companies={companies} loading={loading} />}
             {view === 'certificates' && <Certificates certificates={certificates} loading={loading} />}
             {view === 'notifications' && <Notifications notifications={notifications} loading={loading} />}
@@ -91,7 +111,7 @@ export function App({ initialView = 'dashboard' }) {
   );
 }
 
-function Dashboard({ courses, certificates, notifications, overview, loading }) {
+function Dashboard({ courses, certificates, learnerReport, notifications, overview, loading }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -116,40 +136,86 @@ function Dashboard({ courses, certificates, notifications, overview, loading }) 
           </div>
         )}
       </Card>
+      <Card title="Continue learning">
+        {learnerReport?.courses?.length > 0 ? (
+          <div className="divide-y divide-line">
+            {learnerReport.courses.slice(0, 4).map((course) => (
+              <div className="flex flex-wrap items-center justify-between gap-3 py-3" key={course.enrollment_id}>
+                <div>
+                  <div className="text-sm font-medium text-ink">{course.course_title}</div>
+                  <div className="text-sm text-muted">
+                    {course.completed_lessons} of {course.total_lessons} lessons complete
+                  </div>
+                </div>
+                <div className="h-2 w-36 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-brand" style={{ width: `${course.progress_percent}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Assigned courses and lesson progress will appear here.</p>
+        )}
+      </Card>
     </div>
   );
 }
 
-function Courses({ courses, loading }) {
+function Courses({ courses, lessons, loading, onJoinWaitlist, onSelectCourse, selectedCourse }) {
   if (loading) {
     return <SkeletonRows />;
   }
 
   return (
-    <Card title="Course catalog">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-line text-muted">
-            <tr>
-              <th className="py-3 pr-4 font-medium">Course</th>
-              <th className="py-3 pr-4 font-medium">Status</th>
-              <th className="py-3 pr-4 font-medium">Visibility</th>
-              <th className="py-3 pr-4 font-medium">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((course) => (
-              <tr className="border-b border-line last:border-0" key={course.id}>
-                <td className="py-3 pr-4 font-medium text-ink">{course.title}</td>
-                <td className="py-3 pr-4 capitalize text-muted">{course.status.replace('_', ' ')}</td>
-                <td className="py-3 pr-4 capitalize text-muted">{course.visibility}</td>
-                <td className="py-3 pr-4 text-muted">{course.price_amount ? `${course.currency} ${course.price_amount}` : 'Free'}</td>
+    <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
+      <Card title="Course catalog">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="border-b border-line text-muted">
+              <tr>
+                <th className="py-3 pr-4 font-medium">Course</th>
+                <th className="py-3 pr-4 font-medium">Status</th>
+                <th className="py-3 pr-4 font-medium">Visibility</th>
+                <th className="py-3 pr-4 font-medium">Price</th>
+                <th className="py-3 pr-4 font-medium">Action</th>
               </tr>
+            </thead>
+            <tbody>
+              {courses.map((course) => (
+                <tr className="border-b border-line last:border-0" key={course.id}>
+                  <td className="py-3 pr-4 font-medium text-ink">{course.title}</td>
+                  <td className="py-3 pr-4 capitalize text-muted">{course.status.replace('_', ' ')}</td>
+                  <td className="py-3 pr-4 capitalize text-muted">{course.visibility}</td>
+                  <td className="py-3 pr-4 text-muted">{course.price_amount ? `${course.currency} ${course.price_amount}` : 'Free'}</td>
+                  <td className="py-3 pr-4">
+                    {course.status === 'coming_soon' ? (
+                      <Button onClick={() => onJoinWaitlist(course)} variant="secondary">Join waitlist</Button>
+                    ) : (
+                      <Button onClick={() => onSelectCourse(course)} variant="ghost">View lessons</Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      <Card title={selectedCourse ? selectedCourse.title : 'Lessons'}>
+        {selectedCourse ? (
+          <div className="space-y-3">
+            {lessons.map((lesson) => (
+              <div className="rounded-control border border-line p-3" key={lesson.id}>
+                <div className="text-sm font-medium text-ink">{lesson.title}</div>
+                <div className="mt-1 text-sm text-muted">{lesson.progress.status.replace('_', ' ')}</div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+            {lessons.length === 0 && <p className="text-sm text-muted">No lessons have been added yet.</p>}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Select a course to review its lessons and learner progress state.</p>
+        )}
+      </Card>
+    </div>
   );
 }
 

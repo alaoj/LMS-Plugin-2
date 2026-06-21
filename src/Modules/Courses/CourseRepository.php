@@ -69,4 +69,39 @@ final class CourseRepository
 
         return $wpdb->update($this->tables->courses(), $data, ['id' => $id]) !== false;
     }
+
+    public function joinWaitlist(int $courseId, int $userId, string $joinedAt): int
+    {
+        global $wpdb;
+
+        $existingId = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$this->tables->waitlists()} WHERE course_id = %d AND user_id = %d LIMIT 1",
+            $courseId,
+            $userId
+        ));
+
+        if ($existingId > 0) {
+            return $existingId;
+        }
+
+        $wpdb->insert($this->tables->waitlists(), [
+            'course_id' => $courseId,
+            'user_id' => $userId,
+            'status' => 'joined',
+            'joined_at' => $joinedAt,
+            'notified_at' => null,
+        ]);
+
+        return (int) $wpdb->insert_id;
+    }
+
+    public function waitlistCount(int $courseId): int
+    {
+        global $wpdb;
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->tables->waitlists()} WHERE course_id = %d AND status = 'joined'",
+            $courseId
+        ));
+    }
 }

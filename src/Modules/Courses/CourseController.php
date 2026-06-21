@@ -46,6 +46,12 @@ final class CourseController implements ControllerInterface
                 'permission_callback' => Permissions::capability(Capabilities::MANAGE_COURSES),
             ],
         ]);
+
+        register_rest_route(RestRegistrar::NAMESPACE, '/courses/(?P<id>\d+)/waitlist', [
+            'methods' => 'POST',
+            'callback' => [$this, 'joinWaitlist'],
+            'permission_callback' => Permissions::authenticated(),
+        ]);
     }
 
     public function index(WP_REST_Request $request): WP_REST_Response
@@ -82,6 +88,15 @@ final class CourseController implements ControllerInterface
             return $course ? rest_ensure_response($course) : new WP_Error('zadora_course_not_found', 'Course not found.', ['status' => 404]);
         } catch (InvalidArgumentException $exception) {
             return new WP_Error('zadora_invalid_course', $exception->getMessage(), ['status' => 422]);
+        }
+    }
+
+    public function joinWaitlist(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        try {
+            return new WP_REST_Response($this->courses->joinWaitlist((int) $request['id'], get_current_user_id()), 201);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('zadora_waitlist_denied', $exception->getMessage(), ['status' => 422]);
         }
     }
 }

@@ -19,6 +19,7 @@ final class Schema
         dbDelta($this->lessonsSql($tables->lessons(), $charset));
         dbDelta($this->enrollmentsSql($tables->enrollments(), $charset));
         dbDelta($this->progressSql($tables->progress(), $charset));
+        dbDelta($this->waitlistsSql($tables->waitlists(), $charset));
         dbDelta($this->certificateTemplatesSql($tables->certificateTemplates(), $charset));
         dbDelta($this->certificatesSql($tables->certificates(), $charset));
         dbDelta($this->companiesSql($tables->companies(), $charset));
@@ -110,6 +111,23 @@ final class Schema
             PRIMARY KEY  (id),
             UNIQUE KEY enrollment_lesson (enrollment_id, lesson_id),
             KEY lesson_id (lesson_id),
+            KEY status (status)
+        ) {$charset};";
+    }
+
+    private function waitlistsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            course_id bigint(20) unsigned NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            status varchar(40) NOT NULL DEFAULT 'joined',
+            joined_at datetime NOT NULL,
+            notified_at datetime NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY course_user (course_id, user_id),
+            KEY course_id (course_id),
+            KEY user_id (user_id),
             KEY status (status)
         ) {$charset};";
     }

@@ -37,6 +37,11 @@ final class TableNames
         return $this->prefix . 'zadora_progress';
     }
 
+    public function waitlists(): string
+    {
+        return $this->prefix . 'zadora_waitlists';
+    }
+
     public function certificateTemplates(): string
     {
         return $this->prefix . 'zadora_certificate_templates';
