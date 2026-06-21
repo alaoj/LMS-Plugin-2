@@ -38,6 +38,21 @@ final class EnrollmentRepository
     {
         global $wpdb;
 
+        $existingId = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$this->tables->enrollments()} WHERE course_id = %d AND user_id = %d LIMIT 1",
+            $data['course_id'],
+            $data['user_id']
+        ));
+
+        if ($existingId > 0) {
+            $wpdb->update($this->tables->enrollments(), [
+                'status' => 'active',
+                'updated_at' => $data['updated_at'],
+            ], ['id' => $existingId]);
+
+            return $existingId;
+        }
+
         $wpdb->insert($this->tables->enrollments(), $data);
 
         return (int) $wpdb->insert_id;

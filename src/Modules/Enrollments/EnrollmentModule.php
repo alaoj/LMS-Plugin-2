@@ -23,6 +23,24 @@ final class EnrollmentModule implements ModuleInterface
 
     public function boot(Container $container): void
     {
-        $container->get(RestRegistrar::class)->add(new EnrollmentController($container->get(EnrollmentService::class)));
+        $service = $container->get(EnrollmentService::class);
+
+        $container->get(RestRegistrar::class)->add(new EnrollmentController($service));
+
+        add_action(
+            'zadora_lms_order_paid',
+            static function (array $order) use ($service): void {
+                if (empty($order['course_id']) || empty($order['user_id'])) {
+                    return;
+                }
+
+                $service->enroll([
+                    'course_id' => (int) $order['course_id'],
+                    'user_id' => (int) $order['user_id'],
+                    'company_id' => ! empty($order['company_id']) ? (int) $order['company_id'] : null,
+                    'source' => 'purchase',
+                ]);
+            }
+        );
     }
 }

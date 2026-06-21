@@ -10,6 +10,7 @@ export function App({ initialView = 'dashboard' }) {
   const [view, setView] = useState(initialView);
   const [courses, setCourses] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [certificateTemplates, setCertificateTemplates] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [overview, setOverview] = useState(null);
@@ -25,17 +26,19 @@ export function App({ initialView = 'dashboard' }) {
     Promise.all([
       api('/courses').catch(() => []),
       api('/certificates').catch(() => []),
+      api('/certificate-templates').catch(() => []),
       api('/companies').catch(() => []),
       api('/notifications').catch(() => []),
       api('/reports/overview').catch(() => null),
       api('/reports/learner').catch(() => null)
-    ]).then(([courseData, certificateData, companyData, notificationData, overviewData, learnerData]) => {
+    ]).then(([courseData, certificateData, templateData, companyData, notificationData, overviewData, learnerData]) => {
       if (!active) {
         return;
       }
 
       setCourses(courseData);
       setCertificates(certificateData);
+      setCertificateTemplates(templateData);
       setCompanies(companyData);
       setNotifications(notificationData);
       setOverview(overviewData);
@@ -99,7 +102,9 @@ export function App({ initialView = 'dashboard' }) {
               />
             )}
             {view === 'companies' && <Companies companies={companies} loading={loading} />}
-            {view === 'certificates' && <Certificates certificates={certificates} loading={loading} />}
+            {view === 'certificates' && (
+              <Certificates certificates={certificates} loading={loading} templates={certificateTemplates} />
+            )}
             {view === 'notifications' && <Notifications notifications={notifications} loading={loading} />}
             {!['dashboard', 'courses', 'companies', 'certificates', 'notifications'].includes(view) && (
               <ComingSoon title={view.replace('-', ' ')} />
@@ -219,27 +224,40 @@ function Courses({ courses, lessons, loading, onJoinWaitlist, onSelectCourse, se
   );
 }
 
-function Certificates({ certificates, loading }) {
+function Certificates({ certificates, loading, templates }) {
   if (loading) {
     return <SkeletonRows />;
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {certificates.map((certificate) => (
-        <Card key={certificate.id} title={certificate.display_name}>
-          <div className="space-y-2 text-sm text-muted">
-            <div>{certificate.certificate_number}</div>
-            <div>Issued {certificate.issued_at}</div>
-            <Button variant="secondary">Verify</Button>
-          </div>
-        </Card>
-      ))}
-      {certificates.length === 0 && (
-        <Card title="Certificate wallet">
-          <p className="text-sm text-muted">Issued certificates will be available here for view, download, share, and verification.</p>
-        </Card>
-      )}
+    <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {certificates.map((certificate) => (
+          <Card key={certificate.id} title={certificate.display_name}>
+            <div className="space-y-2 text-sm text-muted">
+              <div>{certificate.certificate_number}</div>
+              <div>Issued {certificate.issued_at}</div>
+              <Button variant="secondary">Verify</Button>
+            </div>
+          </Card>
+        ))}
+        {certificates.length === 0 && (
+          <Card title="Certificate wallet">
+            <p className="text-sm text-muted">Issued certificates will be available here for view, download, share, and verification.</p>
+          </Card>
+        )}
+      </div>
+      <Card title="Certificate templates">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {templates.map((template) => (
+            <div className="rounded-control border border-line p-3" key={template.id}>
+              <div className="text-sm font-medium text-ink">{template.name}</div>
+              <div className="text-sm text-muted">{template.is_default ? 'Default template' : 'Custom template'}</div>
+            </div>
+          ))}
+          {templates.length === 0 && <p className="text-sm text-muted">Create templates through the certificate template API.</p>}
+        </div>
+      </Card>
     </div>
   );
 }

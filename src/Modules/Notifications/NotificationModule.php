@@ -23,6 +23,26 @@ final class NotificationModule implements ModuleInterface
 
     public function boot(Container $container): void
     {
-        $container->get(RestRegistrar::class)->add(new NotificationController($container->get(NotificationService::class)));
+        $service = $container->get(NotificationService::class);
+
+        $container->get(RestRegistrar::class)->add(new NotificationController($service));
+
+        add_action(
+            'zadora_lms_certificate_issued',
+            static function (array $certificate, array $course, int $userId) use ($service): void {
+                $service->create([
+                    'user_id' => $userId,
+                    'type' => 'certificate_issued',
+                    'title' => 'Certificate issued',
+                    'body' => sprintf('Your certificate for %s is ready.', $course['title'] ?? 'your course'),
+                    'data' => [
+                        'certificate_id' => $certificate['id'] ?? null,
+                        'course_id' => $course['id'] ?? null,
+                    ],
+                ]);
+            },
+            10,
+            3
+        );
     }
 }

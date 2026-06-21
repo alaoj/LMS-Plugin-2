@@ -40,9 +40,30 @@ final class OrderRepository
         return $wpdb->update($this->tables->orders(), $data, ['gateway_reference' => $reference]) !== false;
     }
 
+    public function findOrderByReference(string $reference): ?array
+    {
+        global $wpdb;
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$this->tables->orders()} WHERE gateway_reference = %s LIMIT 1", $reference),
+            ARRAY_A
+        );
+
+        return $row ?: null;
+    }
+
     public function recordPayment(array $data): int
     {
         global $wpdb;
+
+        $existingId = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$this->tables->payments()} WHERE gateway_reference = %s LIMIT 1",
+            $data['gateway_reference']
+        ));
+
+        if ($existingId > 0) {
+            return $existingId;
+        }
 
         $wpdb->insert($this->tables->payments(), $data);
 

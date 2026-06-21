@@ -34,6 +34,25 @@ final class CertificateController implements ControllerInterface
             ],
         ]);
 
+        register_rest_route(RestRegistrar::NAMESPACE, '/certificate-templates', [
+            [
+                'methods' => 'GET',
+                'callback' => [$this, 'templates'],
+                'permission_callback' => Permissions::capability(Capabilities::MANAGE_CERTIFICATES),
+            ],
+            [
+                'methods' => 'POST',
+                'callback' => [$this, 'createTemplate'],
+                'permission_callback' => Permissions::capability(Capabilities::MANAGE_CERTIFICATES),
+            ],
+        ]);
+
+        register_rest_route(RestRegistrar::NAMESPACE, '/certificate-templates/(?P<id>\d+)', [
+            'methods' => 'PATCH',
+            'callback' => [$this, 'updateTemplate'],
+            'permission_callback' => Permissions::capability(Capabilities::MANAGE_CERTIFICATES),
+        ]);
+
         register_rest_route(RestRegistrar::NAMESPACE, '/verify-certificate/(?P<hash>[a-zA-Z0-9]+)', [
             'methods' => 'GET',
             'callback' => [$this, 'verify'],
@@ -52,6 +71,31 @@ final class CertificateController implements ControllerInterface
             return new WP_REST_Response($this->certificates->issue($request->get_json_params() ?: []), 201);
         } catch (InvalidArgumentException $exception) {
             return new WP_Error('zadora_invalid_certificate', $exception->getMessage(), ['status' => 422]);
+        }
+    }
+
+    public function templates(WP_REST_Request $request): WP_REST_Response
+    {
+        return rest_ensure_response($this->certificates->templates());
+    }
+
+    public function createTemplate(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        try {
+            return new WP_REST_Response($this->certificates->createTemplate($request->get_json_params() ?: [], get_current_user_id()), 201);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('zadora_invalid_certificate_template', $exception->getMessage(), ['status' => 422]);
+        }
+    }
+
+    public function updateTemplate(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        try {
+            $template = $this->certificates->updateTemplate((int) $request['id'], $request->get_json_params() ?: []);
+
+            return $template ? rest_ensure_response($template) : new WP_Error('zadora_certificate_template_not_found', 'Certificate template not found.', ['status' => 404]);
+        } catch (InvalidArgumentException $exception) {
+            return new WP_Error('zadora_invalid_certificate_template', $exception->getMessage(), ['status' => 422]);
         }
     }
 

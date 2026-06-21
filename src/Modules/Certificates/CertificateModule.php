@@ -23,6 +23,17 @@ final class CertificateModule implements ModuleInterface
 
     public function boot(Container $container): void
     {
-        $container->get(RestRegistrar::class)->add(new CertificateController($container->get(CertificateService::class)));
+        $service = $container->get(CertificateService::class);
+
+        $container->get(RestRegistrar::class)->add(new CertificateController($service));
+
+        add_action(
+            'zadora_lms_course_completed',
+            static function (int $courseId, int $userId, int $enrollmentId) use ($service): void {
+                $service->issueForCompletedCourse($courseId, $userId, $enrollmentId);
+            },
+            10,
+            3
+        );
     }
 }

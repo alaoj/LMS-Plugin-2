@@ -77,18 +77,24 @@ final class PaymentService
             'updated_at' => $now,
         ]);
 
+        $order = $this->orders->findOrderByReference($reference);
+
         $this->orders->recordPayment([
-            'order_id' => absint($payload['order_id'] ?? 0),
+            'order_id' => $order ? (int) $order['id'] : absint($payload['order_id'] ?? 0),
             'gateway' => $gateway,
             'gateway_reference' => $reference,
             'status' => $paymentStatus,
-            'amount' => (float) ($payload['amount'] ?? 0),
-            'currency' => strtoupper(sanitize_text_field((string) ($payload['currency'] ?? 'USD'))),
+            'amount' => $order ? (float) $order['amount'] : (float) ($payload['amount'] ?? 0),
+            'currency' => $order ? $order['currency'] : strtoupper(sanitize_text_field((string) ($payload['currency'] ?? 'USD'))),
             'payload_json' => wp_json_encode($payload, JSON_THROW_ON_ERROR),
             'paid_at' => $paymentStatus === 'paid' ? $now : null,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+
+        if ($paymentStatus === 'paid' && $order) {
+            do_action('zadora_lms_order_paid', $this->transformOrder($order));
+        }
 
         return ['received' => true, 'status' => $paymentStatus];
     }
