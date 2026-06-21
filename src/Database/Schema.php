@@ -21,6 +21,10 @@ final class Schema
         dbDelta($this->progressSql($tables->progress(), $charset));
         dbDelta($this->certificateTemplatesSql($tables->certificateTemplates(), $charset));
         dbDelta($this->certificatesSql($tables->certificates(), $charset));
+        dbDelta($this->companiesSql($tables->companies(), $charset));
+        dbDelta($this->departmentsSql($tables->departments(), $charset));
+        dbDelta($this->companyUsersSql($tables->companyUsers(), $charset));
+        dbDelta($this->notificationsSql($tables->notifications(), $charset));
         dbDelta($this->ordersSql($tables->orders(), $charset));
         dbDelta($this->paymentsSql($tables->payments(), $charset));
     }
@@ -153,6 +157,78 @@ final class Schema
             KEY course_id (course_id),
             KEY issued_at (issued_at),
             KEY expires_at (expires_at)
+        ) {$charset};";
+    }
+
+    private function companiesSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(190) NOT NULL,
+            slug varchar(190) NOT NULL,
+            logo_url text NULL,
+            status varchar(40) NOT NULL DEFAULT 'active',
+            primary_admin_id bigint(20) unsigned NULL,
+            seat_limit int unsigned NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY slug (slug),
+            KEY status (status),
+            KEY primary_admin_id (primary_admin_id)
+        ) {$charset};";
+    }
+
+    private function departmentsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            company_id bigint(20) unsigned NOT NULL,
+            parent_id bigint(20) unsigned NULL,
+            name varchar(190) NOT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY company_id (company_id),
+            KEY parent_id (parent_id)
+        ) {$charset};";
+    }
+
+    private function companyUsersSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            company_id bigint(20) unsigned NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            department_id bigint(20) unsigned NULL,
+            role varchar(40) NOT NULL DEFAULT 'employee',
+            status varchar(40) NOT NULL DEFAULT 'active',
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY company_user (company_id, user_id),
+            KEY user_id (user_id),
+            KEY department_id (department_id),
+            KEY role (role),
+            KEY status (status)
+        ) {$charset};";
+    }
+
+    private function notificationsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned NOT NULL,
+            type varchar(80) NOT NULL,
+            title varchar(190) NOT NULL,
+            body text NULL,
+            data_json longtext NULL,
+            read_at datetime NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY user_read (user_id, read_at),
+            KEY type (type),
+            KEY created_at (created_at)
         ) {$charset};";
     }
 

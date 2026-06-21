@@ -47,6 +47,26 @@ final class TableNames
         return $this->prefix . 'zadora_certificates';
     }
 
+    public function companies(): string
+    {
+        return $this->prefix . 'zadora_companies';
+    }
+
+    public function companyUsers(): string
+    {
+        return $this->prefix . 'zadora_company_users';
+    }
+
+    public function departments(): string
+    {
+        return $this->prefix . 'zadora_departments';
+    }
+
+    public function notifications(): string
+    {
+        return $this->prefix . 'zadora_notifications';
+    }
+
     public function orders(): string
     {
         return $this->prefix . 'zadora_orders';

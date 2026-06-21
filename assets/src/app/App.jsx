@@ -10,6 +10,9 @@ export function App({ initialView = 'dashboard' }) {
   const [view, setView] = useState(initialView);
   const [courses, setCourses] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -18,14 +21,20 @@ export function App({ initialView = 'dashboard' }) {
 
     Promise.all([
       api('/courses').catch(() => []),
-      api('/certificates').catch(() => [])
-    ]).then(([courseData, certificateData]) => {
+      api('/certificates').catch(() => []),
+      api('/companies').catch(() => []),
+      api('/notifications').catch(() => []),
+      api('/reports/overview').catch(() => null)
+    ]).then(([courseData, certificateData, companyData, notificationData, overviewData]) => {
       if (!active) {
         return;
       }
 
       setCourses(courseData);
       setCertificates(certificateData);
+      setCompanies(companyData);
+      setNotifications(notificationData);
+      setOverview(overviewData);
       setLoading(false);
     });
 
@@ -59,10 +68,22 @@ export function App({ initialView = 'dashboard' }) {
           </header>
 
           <div className="p-5">
-            {view === 'dashboard' && <Dashboard courses={courses} certificates={certificates} loading={loading} />}
+            {view === 'dashboard' && (
+              <Dashboard
+                certificates={certificates}
+                courses={courses}
+                loading={loading}
+                notifications={notifications}
+                overview={overview}
+              />
+            )}
             {view === 'courses' && <Courses courses={courses} loading={loading} />}
+            {view === 'companies' && <Companies companies={companies} loading={loading} />}
             {view === 'certificates' && <Certificates certificates={certificates} loading={loading} />}
-            {!['dashboard', 'courses', 'certificates'].includes(view) && <ComingSoon title={view.replace('-', ' ')} />}
+            {view === 'notifications' && <Notifications notifications={notifications} loading={loading} />}
+            {!['dashboard', 'courses', 'companies', 'certificates', 'notifications'].includes(view) && (
+              <ComingSoon title={view.replace('-', ' ')} />
+            )}
           </div>
         </main>
       </div>
@@ -70,19 +91,30 @@ export function App({ initialView = 'dashboard' }) {
   );
 }
 
-function Dashboard({ courses, certificates, loading }) {
+function Dashboard({ courses, certificates, notifications, overview, loading }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Courses" value={loading ? '...' : courses.length} detail="Active learning catalog" />
-        <MetricCard label="Certificates" value={loading ? '...' : certificates.length} detail="Issued credentials" />
-        <MetricCard label="Completion" value="0%" detail="Reporting baseline ready" />
-        <MetricCard label="Revenue" value="0" detail="Payments foundation ready" />
+        <MetricCard label="Courses" value={loading ? '...' : overview?.courses ?? courses.length} detail="Active learning catalog" />
+        <MetricCard label="Certificates" value={loading ? '...' : overview?.certificates ?? certificates.length} detail="Issued credentials" />
+        <MetricCard label="Completion" value={`${overview?.completed_enrollments ?? 0}`} detail="Completed enrollments" />
+        <MetricCard label="Revenue" value={overview?.revenue ?? 0} detail="Paid order value" />
       </div>
       <Card title="Recent activity">
-        <div className="rounded-control border border-dashed border-line p-6 text-sm text-muted">
-          Learning, payment, and certificate events will appear here as modules emit activity records.
-        </div>
+        {notifications.length > 0 ? (
+          <div className="divide-y divide-line">
+            {notifications.slice(0, 5).map((notification) => (
+              <div className="py-3" key={notification.id}>
+                <div className="text-sm font-medium text-ink">{notification.title}</div>
+                <div className="text-sm text-muted">{notification.body}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-control border border-dashed border-line p-6 text-sm text-muted">
+            Learning, payment, and certificate events will appear here as modules emit activity records.
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -143,6 +175,60 @@ function Certificates({ certificates, loading }) {
         </Card>
       )}
     </div>
+  );
+}
+
+function Companies({ companies, loading }) {
+  if (loading) {
+    return <SkeletonRows />;
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {companies.map((company) => (
+        <Card key={company.id} title={company.name}>
+          <div className="grid gap-3 text-sm text-muted sm:grid-cols-3">
+            <div>
+              <div className="font-medium text-ink">{company.active_users}</div>
+              <div>Employees</div>
+            </div>
+            <div>
+              <div className="font-medium text-ink">{company.departments}</div>
+              <div>Departments</div>
+            </div>
+            <div>
+              <div className="font-medium text-ink">{company.seat_limit}</div>
+              <div>Seats</div>
+            </div>
+          </div>
+        </Card>
+      ))}
+      {companies.length === 0 && (
+        <Card title="Corporate training">
+          <p className="text-sm text-muted">Create companies, departments, and employee assignments from the corporate API.</p>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function Notifications({ notifications, loading }) {
+  if (loading) {
+    return <SkeletonRows />;
+  }
+
+  return (
+    <Card title="Notification center">
+      <div className="divide-y divide-line">
+        {notifications.map((notification) => (
+          <div className="py-3" key={notification.id}>
+            <div className="text-sm font-medium text-ink">{notification.title}</div>
+            <div className="text-sm text-muted">{notification.body}</div>
+          </div>
+        ))}
+      </div>
+      {notifications.length === 0 && <p className="text-sm text-muted">No notifications yet.</p>}
+    </Card>
   );
 }
 
