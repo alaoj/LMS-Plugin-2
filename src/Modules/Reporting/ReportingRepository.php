@@ -20,6 +20,9 @@ final class ReportingRepository
             'courses' => $this->count($this->tables->courses()),
             'enrollments' => $this->count($this->tables->enrollments()),
             'completed_enrollments' => $this->countWhere($this->tables->enrollments(), "status = 'completed'"),
+            'assessments' => $this->count($this->tables->assessments()),
+            'submissions_pending_grading' => $this->countWhere($this->tables->submissions(), "status = 'submitted'"),
+            'submissions_graded' => $this->countWhere($this->tables->submissions(), "status = 'graded'"),
             'certificates' => $this->count($this->tables->certificates()),
             'companies' => $this->count($this->tables->companies()),
             'orders' => $this->count($this->tables->orders()),
@@ -100,6 +103,16 @@ final class ReportingRepository
             'active_courses' => count(array_filter($items, static fn (array $item): bool => $item['status'] === 'active')),
             'completed_courses' => count($completed),
             'courses' => $items,
+        ];
+    }
+
+    public function assessments(): array
+    {
+        return [
+            'total_assessments' => $this->count($this->tables->assessments()),
+            'pending_grading' => $this->countWhere($this->tables->submissions(), "status = 'submitted'"),
+            'graded' => $this->countWhere($this->tables->submissions(), "status = 'graded'"),
+            'returned' => $this->countWhere($this->tables->submissions(), "status = 'returned'"),
         ];
     }
 

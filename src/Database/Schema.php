@@ -20,6 +20,8 @@ final class Schema
         dbDelta($this->enrollmentsSql($tables->enrollments(), $charset));
         dbDelta($this->progressSql($tables->progress(), $charset));
         dbDelta($this->waitlistsSql($tables->waitlists(), $charset));
+        dbDelta($this->assessmentsSql($tables->assessments(), $charset));
+        dbDelta($this->submissionsSql($tables->submissions(), $charset));
         dbDelta($this->certificateTemplatesSql($tables->certificateTemplates(), $charset));
         dbDelta($this->certificatesSql($tables->certificates(), $charset));
         dbDelta($this->companiesSql($tables->companies(), $charset));
@@ -129,6 +131,45 @@ final class Schema
             KEY course_id (course_id),
             KEY user_id (user_id),
             KEY status (status)
+        ) {$charset};";
+    }
+
+    private function assessmentsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            course_id bigint(20) unsigned NOT NULL,
+            title varchar(190) NOT NULL,
+            type varchar(40) NOT NULL DEFAULT 'quiz',
+            settings_json longtext NOT NULL,
+            passing_score decimal(5,2) NOT NULL DEFAULT 70.00,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY course_id (course_id),
+            KEY type (type)
+        ) {$charset};";
+    }
+
+    private function submissionsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            assessment_id bigint(20) unsigned NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            status varchar(40) NOT NULL DEFAULT 'submitted',
+            score decimal(5,2) NULL,
+            answers_json longtext NOT NULL,
+            feedback text NULL,
+            graded_by bigint(20) unsigned NULL,
+            graded_at datetime NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY assessment_id (assessment_id),
+            KEY user_id (user_id),
+            KEY status (status),
+            KEY graded_by (graded_by)
         ) {$charset};";
     }
 

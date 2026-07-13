@@ -14,6 +14,8 @@ export function App({ initialView = 'dashboard' }) {
   const [companies, setCompanies] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [overview, setOverview] = useState(null);
+  const [assessmentReport, setAssessmentReport] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
   const [learnerReport, setLearnerReport] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
@@ -30,8 +32,10 @@ export function App({ initialView = 'dashboard' }) {
       api('/companies').catch(() => []),
       api('/notifications').catch(() => []),
       api('/reports/overview').catch(() => null),
+      api('/reports/assessments').catch(() => null),
+      api('/assessment-submissions?status=submitted').catch(() => []),
       api('/reports/learner').catch(() => null)
-    ]).then(([courseData, certificateData, templateData, companyData, notificationData, overviewData, learnerData]) => {
+    ]).then(([courseData, certificateData, templateData, companyData, notificationData, overviewData, assessmentData, submissionData, learnerData]) => {
       if (!active) {
         return;
       }
@@ -42,6 +46,8 @@ export function App({ initialView = 'dashboard' }) {
       setCompanies(companyData);
       setNotifications(notificationData);
       setOverview(overviewData);
+      setAssessmentReport(assessmentData);
+      setSubmissions(submissionData);
       setLearnerReport(learnerData);
       setLoading(false);
     });
@@ -84,6 +90,7 @@ export function App({ initialView = 'dashboard' }) {
                 loading={loading}
                 notifications={notifications}
                 overview={overview}
+                assessmentReport={assessmentReport}
               />
             )}
             {view === 'courses' && (
@@ -101,12 +108,15 @@ export function App({ initialView = 'dashboard' }) {
                 selectedCourse={selectedCourse}
               />
             )}
+            {view === 'assessments' && (
+              <Assessments loading={loading} report={assessmentReport} submissions={submissions} />
+            )}
             {view === 'companies' && <Companies companies={companies} loading={loading} />}
             {view === 'certificates' && (
               <Certificates certificates={certificates} loading={loading} templates={certificateTemplates} />
             )}
             {view === 'notifications' && <Notifications notifications={notifications} loading={loading} />}
-            {!['dashboard', 'courses', 'companies', 'certificates', 'notifications'].includes(view) && (
+            {!['dashboard', 'courses', 'assessments', 'companies', 'certificates', 'notifications'].includes(view) && (
               <ComingSoon title={view.replace('-', ' ')} />
             )}
           </div>
@@ -116,13 +126,13 @@ export function App({ initialView = 'dashboard' }) {
   );
 }
 
-function Dashboard({ courses, certificates, learnerReport, notifications, overview, loading }) {
+function Dashboard({ assessmentReport, courses, certificates, learnerReport, notifications, overview, loading }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Courses" value={loading ? '...' : overview?.courses ?? courses.length} detail="Active learning catalog" />
         <MetricCard label="Certificates" value={loading ? '...' : overview?.certificates ?? certificates.length} detail="Issued credentials" />
-        <MetricCard label="Completion" value={`${overview?.completed_enrollments ?? 0}`} detail="Completed enrollments" />
+        <MetricCard label="Pending grading" value={assessmentReport?.pending_grading ?? overview?.submissions_pending_grading ?? 0} detail="Instructor review queue" />
         <MetricCard label="Revenue" value={overview?.revenue ?? 0} detail="Paid order value" />
       </div>
       <Card title="Recent activity">
@@ -161,6 +171,36 @@ function Dashboard({ courses, certificates, learnerReport, notifications, overvi
         ) : (
           <p className="text-sm text-muted">Assigned courses and lesson progress will appear here.</p>
         )}
+      </Card>
+    </div>
+  );
+}
+
+function Assessments({ loading, report, submissions }) {
+  if (loading) {
+    return <SkeletonRows />;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard label="Assessments" value={report?.total_assessments ?? 0} detail="Configured checks" />
+        <MetricCard label="Pending grading" value={report?.pending_grading ?? 0} detail="Needs instructor review" />
+        <MetricCard label="Graded" value={report?.graded ?? 0} detail="Completed submissions" />
+      </div>
+      <Card title="Pending submissions">
+        <div className="divide-y divide-line">
+          {submissions.map((submission) => (
+            <div className="flex flex-wrap items-center justify-between gap-3 py-3" key={submission.id}>
+              <div>
+                <div className="text-sm font-medium text-ink">Submission #{submission.id}</div>
+                <div className="text-sm text-muted">Assessment #{submission.assessment_id} by user #{submission.user_id}</div>
+              </div>
+              <Button variant="secondary">Grade</Button>
+            </div>
+          ))}
+        </div>
+        {submissions.length === 0 && <p className="text-sm text-muted">No submissions are waiting for grading.</p>}
       </Card>
     </div>
   );

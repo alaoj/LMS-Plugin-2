@@ -44,5 +44,28 @@ final class NotificationModule implements ModuleInterface
             10,
             3
         );
+
+        add_action(
+            'zadora_lms_assessment_graded',
+            static function (array $submission, array $assessment) use ($service): void {
+                if (empty($submission['user_id'])) {
+                    return;
+                }
+
+                $service->create([
+                    'user_id' => (int) $submission['user_id'],
+                    'type' => 'assessment_graded',
+                    'title' => 'Assessment graded',
+                    'body' => sprintf('Your submission for %s has been graded.', $assessment['title'] ?? 'an assessment'),
+                    'data' => [
+                        'assessment_id' => $submission['assessment_id'] ?? null,
+                        'submission_id' => $submission['id'] ?? null,
+                        'score' => $submission['score'] ?? null,
+                    ],
+                ]);
+            },
+            10,
+            2
+        );
     }
 }

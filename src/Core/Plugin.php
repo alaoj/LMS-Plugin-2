@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zadora\Lms\Core;
 
 use Zadora\Lms\Http\RestRegistrar;
+use Zadora\Lms\Modules\Assessments\AssessmentModule;
 use Zadora\Lms\Modules\Certificates\CertificateModule;
 use Zadora\Lms\Modules\Companies\CompanyModule;
 use Zadora\Lms\Modules\Courses\CourseModule;
@@ -32,6 +33,7 @@ final class Plugin
         $this->modules = [
             new CourseModule(),
             new EnrollmentModule(),
+            new AssessmentModule(),
             new CertificateModule(),
             new CompanyModule(),
             new NotificationModule(),

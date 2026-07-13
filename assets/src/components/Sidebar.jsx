@@ -1,8 +1,9 @@
-import { Award, Bell, BookOpen, Building2, CreditCard, LayoutDashboard, Settings, Users } from 'lucide-react';
+import { Award, Bell, BookOpen, Building2, ClipboardCheck, CreditCard, LayoutDashboard, Settings, Users } from 'lucide-react';
 
 const items = [
   { label: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' },
   { label: 'Courses', icon: BookOpen, view: 'courses' },
+  { label: 'Assessments', icon: ClipboardCheck, view: 'assessments' },
   { label: 'Learners', icon: Users, view: 'learners' },
   { label: 'Companies', icon: Building2, view: 'companies' },
   { label: 'Certificates', icon: Award, view: 'certificates' },
