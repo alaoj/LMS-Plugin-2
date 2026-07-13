@@ -42,6 +42,12 @@ final class ReportingController implements ControllerInterface
             'callback' => [$this, 'assessments'],
             'permission_callback' => Permissions::capability(Capabilities::VIEW_REPORTS),
         ]);
+
+        register_rest_route(RestRegistrar::NAMESPACE, '/reports/ai', [
+            'methods' => 'GET',
+            'callback' => [$this, 'ai'],
+            'permission_callback' => Permissions::capability(Capabilities::VIEW_REPORTS),
+        ]);
     }
 
     public function overview(WP_REST_Request $request): WP_REST_Response
@@ -62,5 +68,10 @@ final class ReportingController implements ControllerInterface
     public function assessments(WP_REST_Request $request): WP_REST_Response
     {
         return rest_ensure_response($this->reports->assessments());
+    }
+
+    public function ai(WP_REST_Request $request): WP_REST_Response
+    {
+        return rest_ensure_response($this->reports->ai());
     }
 }

@@ -82,6 +82,11 @@ final class TableNames
         return $this->prefix . 'zadora_notifications';
     }
 
+    public function aiRequests(): string
+    {
+        return $this->prefix . 'zadora_ai_requests';
+    }
+
     public function orders(): string
     {
         return $this->prefix . 'zadora_orders';

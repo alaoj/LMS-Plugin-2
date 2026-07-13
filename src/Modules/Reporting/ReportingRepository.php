@@ -23,6 +23,7 @@ final class ReportingRepository
             'assessments' => $this->count($this->tables->assessments()),
             'submissions_pending_grading' => $this->countWhere($this->tables->submissions(), "status = 'submitted'"),
             'submissions_graded' => $this->countWhere($this->tables->submissions(), "status = 'graded'"),
+            'ai_requests' => $this->count($this->tables->aiRequests()),
             'certificates' => $this->count($this->tables->certificates()),
             'companies' => $this->count($this->tables->companies()),
             'orders' => $this->count($this->tables->orders()),
@@ -113,6 +114,16 @@ final class ReportingRepository
             'pending_grading' => $this->countWhere($this->tables->submissions(), "status = 'submitted'"),
             'graded' => $this->countWhere($this->tables->submissions(), "status = 'graded'"),
             'returned' => $this->countWhere($this->tables->submissions(), "status = 'returned'"),
+        ];
+    }
+
+    public function ai(): array
+    {
+        return [
+            'total_requests' => $this->count($this->tables->aiRequests()),
+            'quiz_requests' => $this->countWhere($this->tables->aiRequests(), "task = 'quiz'"),
+            'objective_requests' => $this->countWhere($this->tables->aiRequests(), "task = 'objectives'"),
+            'grading_suggestions' => $this->countWhere($this->tables->aiRequests(), "task = 'grading_suggestion'"),
         ];
     }
 

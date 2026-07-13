@@ -15,6 +15,8 @@ export function App({ initialView = 'dashboard' }) {
   const [notifications, setNotifications] = useState([]);
   const [overview, setOverview] = useState(null);
   const [assessmentReport, setAssessmentReport] = useState(null);
+  const [aiReport, setAiReport] = useState(null);
+  const [settings, setSettings] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [learnerReport, setLearnerReport] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -33,9 +35,11 @@ export function App({ initialView = 'dashboard' }) {
       api('/notifications').catch(() => []),
       api('/reports/overview').catch(() => null),
       api('/reports/assessments').catch(() => null),
+      api('/reports/ai').catch(() => null),
+      api('/settings').catch(() => null),
       api('/assessment-submissions?status=submitted').catch(() => []),
       api('/reports/learner').catch(() => null)
-    ]).then(([courseData, certificateData, templateData, companyData, notificationData, overviewData, assessmentData, submissionData, learnerData]) => {
+    ]).then(([courseData, certificateData, templateData, companyData, notificationData, overviewData, assessmentData, aiData, settingsData, submissionData, learnerData]) => {
       if (!active) {
         return;
       }
@@ -47,6 +51,8 @@ export function App({ initialView = 'dashboard' }) {
       setNotifications(notificationData);
       setOverview(overviewData);
       setAssessmentReport(assessmentData);
+      setAiReport(aiData);
+      setSettings(settingsData);
       setSubmissions(submissionData);
       setLearnerReport(learnerData);
       setLoading(false);
@@ -91,6 +97,7 @@ export function App({ initialView = 'dashboard' }) {
                 notifications={notifications}
                 overview={overview}
                 assessmentReport={assessmentReport}
+                aiReport={aiReport}
               />
             )}
             {view === 'courses' && (
@@ -111,12 +118,14 @@ export function App({ initialView = 'dashboard' }) {
             {view === 'assessments' && (
               <Assessments loading={loading} report={assessmentReport} submissions={submissions} />
             )}
+            {view === 'ai' && <AiPanel loading={loading} report={aiReport} settings={settings?.ai} />}
             {view === 'companies' && <Companies companies={companies} loading={loading} />}
             {view === 'certificates' && (
               <Certificates certificates={certificates} loading={loading} templates={certificateTemplates} />
             )}
             {view === 'notifications' && <Notifications notifications={notifications} loading={loading} />}
-            {!['dashboard', 'courses', 'assessments', 'companies', 'certificates', 'notifications'].includes(view) && (
+            {view === 'settings' && <SettingsPanel loading={loading} settings={settings} />}
+            {!['dashboard', 'courses', 'assessments', 'ai', 'companies', 'certificates', 'notifications', 'settings'].includes(view) && (
               <ComingSoon title={view.replace('-', ' ')} />
             )}
           </div>
@@ -126,14 +135,14 @@ export function App({ initialView = 'dashboard' }) {
   );
 }
 
-function Dashboard({ assessmentReport, courses, certificates, learnerReport, notifications, overview, loading }) {
+function Dashboard({ aiReport, assessmentReport, courses, certificates, learnerReport, notifications, overview, loading }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Courses" value={loading ? '...' : overview?.courses ?? courses.length} detail="Active learning catalog" />
         <MetricCard label="Certificates" value={loading ? '...' : overview?.certificates ?? certificates.length} detail="Issued credentials" />
         <MetricCard label="Pending grading" value={assessmentReport?.pending_grading ?? overview?.submissions_pending_grading ?? 0} detail="Instructor review queue" />
-        <MetricCard label="Revenue" value={overview?.revenue ?? 0} detail="Paid order value" />
+        <MetricCard label="AI requests" value={aiReport?.total_requests ?? overview?.ai_requests ?? 0} detail="Draft generation usage" />
       </div>
       <Card title="Recent activity">
         {notifications.length > 0 ? (
@@ -172,6 +181,64 @@ function Dashboard({ assessmentReport, courses, certificates, learnerReport, not
           <p className="text-sm text-muted">Assigned courses and lesson progress will appear here.</p>
         )}
       </Card>
+    </div>
+  );
+}
+
+function AiPanel({ loading, report, settings }) {
+  if (loading) {
+    return <SkeletonRows />;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-4">
+        <MetricCard label="Total requests" value={report?.total_requests ?? 0} detail="All AI tasks" />
+        <MetricCard label="Quiz drafts" value={report?.quiz_requests ?? 0} detail="Question generation" />
+        <MetricCard label="Objectives" value={report?.objective_requests ?? 0} detail="Learning goals" />
+        <MetricCard label="Grading suggestions" value={report?.grading_suggestions ?? 0} detail="Instructor-assisted" />
+      </div>
+      <Card title="AI configuration">
+        <div className="grid gap-3 text-sm text-muted md:grid-cols-3">
+          <div>
+            <div className="font-medium text-ink">{settings?.provider ?? 'openai'}</div>
+            <div>Provider</div>
+          </div>
+          <div>
+            <div className="font-medium text-ink">{settings?.monthly_usage_limit ?? 1000}</div>
+            <div>Monthly limit</div>
+          </div>
+          <div>
+            <div className="font-medium text-ink">
+              {settings?.openai_api_key === 'configured' || settings?.claude_api_key === 'configured' ? 'Configured' : 'Not configured'}
+            </div>
+            <div>API key status</div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SettingsPanel({ loading, settings }) {
+  if (loading) {
+    return <SkeletonRows />;
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {Object.entries(settings || {}).map(([section, values]) => (
+        <Card key={section} title={section}>
+          <div className="space-y-2 text-sm text-muted">
+            {Object.entries(values || {}).map(([key, value]) => (
+              <div className="flex justify-between gap-4" key={key}>
+                <span>{key.replaceAll('_', ' ')}</span>
+                <span className="font-medium text-ink">{String(value ?? 'Not set')}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }

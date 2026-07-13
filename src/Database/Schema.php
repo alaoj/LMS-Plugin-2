@@ -28,6 +28,7 @@ final class Schema
         dbDelta($this->departmentsSql($tables->departments(), $charset));
         dbDelta($this->companyUsersSql($tables->companyUsers(), $charset));
         dbDelta($this->notificationsSql($tables->notifications(), $charset));
+        dbDelta($this->aiRequestsSql($tables->aiRequests(), $charset));
         dbDelta($this->ordersSql($tables->orders(), $charset));
         dbDelta($this->paymentsSql($tables->payments(), $charset));
     }
@@ -287,6 +288,32 @@ final class Schema
             PRIMARY KEY  (id),
             KEY user_read (user_id, read_at),
             KEY type (type),
+            KEY created_at (created_at)
+        ) {$charset};";
+    }
+
+    private function aiRequestsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned NOT NULL,
+            company_id bigint(20) unsigned NULL,
+            provider varchar(40) NOT NULL,
+            task varchar(80) NOT NULL,
+            status varchar(40) NOT NULL DEFAULT 'completed',
+            input_hash varchar(96) NOT NULL,
+            tokens_in int unsigned NOT NULL DEFAULT 0,
+            tokens_out int unsigned NOT NULL DEFAULT 0,
+            cost_minor int unsigned NOT NULL DEFAULT 0,
+            result_json longtext NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY user_id (user_id),
+            KEY company_id (company_id),
+            KEY provider (provider),
+            KEY task (task),
+            KEY status (status),
             KEY created_at (created_at)
         ) {$charset};";
     }
