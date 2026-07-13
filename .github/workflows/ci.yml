@@ -1,0 +1,39 @@
+name: Zadora LMS CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    name: Verify plugin scaffold
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate manifests
+        run: |
+          php -r "json_decode(file_get_contents('composer.json'), true, 512, JSON_THROW_ON_ERROR);"
+          node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'));"
+
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          find . -path './.git' -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax check
+        run: node --check assets/dist/app.js
