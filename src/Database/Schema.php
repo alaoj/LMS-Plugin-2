@@ -27,6 +27,10 @@ final class Schema
         dbDelta($this->companiesSql($tables->companies(), $charset));
         dbDelta($this->departmentsSql($tables->departments(), $charset));
         dbDelta($this->companyUsersSql($tables->companyUsers(), $charset));
+        dbDelta($this->groupsSql($tables->groups(), $charset));
+        dbDelta($this->groupMembersSql($tables->groupMembers(), $charset));
+        dbDelta($this->groupCoursesSql($tables->groupCourses(), $charset));
+        dbDelta($this->announcementsSql($tables->announcements(), $charset));
         dbDelta($this->notificationsSql($tables->notifications(), $charset));
         dbDelta($this->aiRequestsSql($tables->aiRequests(), $charset));
         dbDelta($this->ordersSql($tables->orders(), $charset));
@@ -271,6 +275,81 @@ final class Schema
             KEY department_id (department_id),
             KEY role (role),
             KEY status (status)
+        ) {$charset};";
+    }
+
+    private function groupsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            company_id bigint(20) unsigned NULL,
+            name varchar(190) NOT NULL,
+            description text NULL,
+            status varchar(40) NOT NULL DEFAULT 'active',
+            created_by bigint(20) unsigned NOT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY company_id (company_id),
+            KEY status (status),
+            KEY created_by (created_by)
+        ) {$charset};";
+    }
+
+    private function groupMembersSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            group_id bigint(20) unsigned NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            role varchar(40) NOT NULL DEFAULT 'member',
+            status varchar(40) NOT NULL DEFAULT 'active',
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY group_user (group_id, user_id),
+            KEY group_id (group_id),
+            KEY user_id (user_id),
+            KEY role (role),
+            KEY status (status)
+        ) {$charset};";
+    }
+
+    private function groupCoursesSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            group_id bigint(20) unsigned NOT NULL,
+            course_id bigint(20) unsigned NOT NULL,
+            assigned_by bigint(20) unsigned NOT NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY group_course (group_id, course_id),
+            KEY group_id (group_id),
+            KEY course_id (course_id)
+        ) {$charset};";
+    }
+
+    private function announcementsSql(string $table, string $charset): string
+    {
+        return "CREATE TABLE {$table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            scope_type varchar(40) NOT NULL DEFAULT 'global',
+            scope_id bigint(20) unsigned NULL,
+            author_id bigint(20) unsigned NOT NULL,
+            title varchar(190) NOT NULL,
+            body text NOT NULL,
+            status varchar(40) NOT NULL DEFAULT 'published',
+            starts_at datetime NULL,
+            ends_at datetime NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY scope (scope_type, scope_id),
+            KEY author_id (author_id),
+            KEY status (status),
+            KEY starts_at (starts_at),
+            KEY ends_at (ends_at)
         ) {$charset};";
     }
 

@@ -7,10 +7,12 @@ namespace Zadora\Lms\Core;
 use Zadora\Lms\Http\RestRegistrar;
 use Zadora\Lms\Modules\Assessments\AssessmentModule;
 use Zadora\Lms\Modules\Ai\AiModule;
+use Zadora\Lms\Modules\Announcements\AnnouncementModule;
 use Zadora\Lms\Modules\Certificates\CertificateModule;
 use Zadora\Lms\Modules\Companies\CompanyModule;
 use Zadora\Lms\Modules\Courses\CourseModule;
 use Zadora\Lms\Modules\Enrollments\EnrollmentModule;
+use Zadora\Lms\Modules\Groups\GroupModule;
 use Zadora\Lms\Modules\Notifications\NotificationModule;
 use Zadora\Lms\Modules\Payments\PaymentModule;
 use Zadora\Lms\Modules\Reporting\ReportingModule;
@@ -38,6 +40,8 @@ final class Plugin
             new AssessmentModule(),
             new CertificateModule(),
             new CompanyModule(),
+            new GroupModule(),
+            new AnnouncementModule(),
             new NotificationModule(),
             new PaymentModule(),
             new ReportingModule(),

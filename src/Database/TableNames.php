@@ -77,6 +77,26 @@ final class TableNames
         return $this->prefix . 'zadora_departments';
     }
 
+    public function groups(): string
+    {
+        return $this->prefix . 'zadora_groups';
+    }
+
+    public function groupMembers(): string
+    {
+        return $this->prefix . 'zadora_group_members';
+    }
+
+    public function groupCourses(): string
+    {
+        return $this->prefix . 'zadora_group_courses';
+    }
+
+    public function announcements(): string
+    {
+        return $this->prefix . 'zadora_announcements';
+    }
+
     public function notifications(): string
     {
         return $this->prefix . 'zadora_notifications';

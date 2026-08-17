@@ -26,6 +26,8 @@ final class ReportingRepository
             'ai_requests' => $this->count($this->tables->aiRequests()),
             'certificates' => $this->count($this->tables->certificates()),
             'companies' => $this->count($this->tables->companies()),
+            'groups' => $this->count($this->tables->groups()),
+            'announcements' => $this->countWhere($this->tables->announcements(), "status = 'published'"),
             'orders' => $this->count($this->tables->orders()),
             'revenue' => (float) $wpdb->get_var("SELECT COALESCE(SUM(amount), 0) FROM {$this->tables->orders()} WHERE status = 'paid'"),
         ];
